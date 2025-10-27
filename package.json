@@ -13,6 +13,7 @@
   "description": "",
   "dependencies": {
     "express": "^5.1.0",
-    "http-proxy": "^1.18.1"
+    "http-proxy": "^1.18.1",
+    "minimist": "^1.2.8"
   }
 }

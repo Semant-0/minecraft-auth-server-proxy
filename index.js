@@ -1,9 +1,12 @@
+import minimist from 'minimist';
 import express from 'express';
 import fs from 'fs';
 
 const ENDLINE = process.platform === 'win32' ? '\r\n' : '\n';
 
-const PORT = 50000;
+const argv = minimist(process.argv.slice(2));
+
+const port = argv.p || 50000;
 
 // Create proxy
 const proxy = express();
@@ -18,7 +21,7 @@ proxy.get('/sessionserver/*suburl', authenticate);
 proxy.get('/', getMeta);
 
 // Start proxy
-proxy.listen(PORT, () => console.log(`[proxy] Proxy server running at http://localhost:${ PORT }`));
+proxy.listen(port, () => console.log(`[proxy] Proxy server running at http://localhost:${ port }`));
 
 loadAuthServerList();
 
