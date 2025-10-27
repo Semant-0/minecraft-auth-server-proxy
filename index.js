@@ -21,7 +21,7 @@ proxy.get('/sessionserver/*suburl', authenticate);
 proxy.get('/', getMeta);
 
 // Start proxy
-proxy.listen(port, () => console.log(`[proxy] Proxy server running at http://localhost:${ port }`));
+proxy.listen(port, () => console.log(`[${ getTime() }] Proxy server running at http://localhost:${ port }`));
 
 loadAuthServerList();
 
@@ -30,7 +30,7 @@ loadAuthServerList();
  * @param {import('express').Response} res 
  */
 function getMeta(req, res) {
-    console.log('[server connecton] Minecraft server connected');
+    console.log(`[${ getTime() }] Minecraft server connected`);
 
     res.status(200).send({
         meta: {
@@ -63,11 +63,11 @@ async function authenticate(req, res) {
         const authResponseBody = await getBody(authResponse);
 
         const authServerHostname = new URL(authServerUrl).hostname;
-        console.log(`[${ new Date().toLocaleTimeString() }] ${username} authenticated with ${authServerHostname}`);
+        console.log(`[${ getTime() }] ${username} authenticated with ${authServerHostname}`);
         return res.status(200).setHeaders(authResponse.headers).send(authResponseBody);
     }
 
-    console.log(`[${ new Date().toLocaleTimeString() }] Failed to authenticate ${username}`);
+    console.log(`[${ getTime() }] Failed to authenticate ${username}`);
     return res.sendStatus(404);
 }
 
@@ -97,4 +97,8 @@ async function getBody(res) {
     // if (!res.headers.has('content-length')) return null;
     if (res.headers.get('content-type').includes('application/json')) return await res.json();
     return await res.text();
+}
+
+function getTime() {
+    return new Date().toLocaleTimeString();
 }
