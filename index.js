@@ -22,14 +22,14 @@ proxy.get('/sessionserver/*suburl', authenticate);
 proxy.get('/', getMeta);
 
 // Start proxy
-proxy.listen(port, () => console.log(`[${ getTime() }] Proxy server running at http://localhost:${ port }`));
+proxy.listen(port, () => timeLog(`Proxy server running at http://localhost:${ port }`));
 
 /**
  * @param {Request} req 
  * @param {import('express').Response} res 
  */
 function getMeta(req, res) {
-    console.log(`[${ getTime() }] Minecraft server connected`);
+    timeLog('Minecraft server connected');
 
     res.status(200).send({
         meta: {
@@ -61,11 +61,11 @@ async function authenticate(req, res) {
         const authResponseBody = await getBody(authResponse);
 
         const authServerHostname = new URL(authServerUrl).hostname;
-        console.log(`[${ getTime() }] ${username} authenticated with ${authServerHostname}`);
+        timeLog(`${username} authenticated with ${authServerHostname}`);
         return res.status(200).setHeaders(authResponse.headers).send(authResponseBody);
     }
 
-    console.log(`[${ getTime() }] Failed to authenticate ${username}`);
+    timeLog(`Failed to authenticate ${username}`);
     return res.sendStatus(404);
 }
 
@@ -97,6 +97,6 @@ async function getBody(res) {
     return await res.text();
 }
 
-function getTime() {
-    return new Date().toLocaleTimeString();
+function timeLog(message, ...optionalParams) {
+    console.log(`[${ new Date().toLocaleTimeString() }] `, message, ...optionalParams);
 }
