@@ -32,7 +32,7 @@ proxy.listen(port, () => {
  * @param {import('express').Response} res 
  */
 function getMeta(req, res) {
-    timeLog('Minecraft server connected');
+    timeLog(`Minecraft server (${ getConnectedAddr(req) }) connected`);
 
     res.status(200).send({
         meta: {
@@ -47,6 +47,16 @@ function getMeta(req, res) {
             // }
         }
     });
+}
+
+/**
+ * @param {import('express').Request} req
+ */
+function getConnectedAddr(req) {
+    const connectionIp = req.ip.replace('::ffff:', '');
+    const connectionPort = req.socket.remotePort;
+
+    return `${connectionIp}:${connectionPort}`;
 }
 
 /**
