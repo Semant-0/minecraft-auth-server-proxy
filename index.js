@@ -74,7 +74,7 @@ async function authenticate(req, res) {
 
 function loadAuthServerList() {
     const authServerFile = fs.readFileSync('./auth-server-list').toString();
-    const authServerList = authServerFile.split(ENDLINE);
+    const authServerList = authServerFile.split(ENDLINE).filter(authServerUrl => authServerUrl.length > 0);
     return authServerList;
 }
 
