@@ -7,6 +7,7 @@ const ENDLINE = process.platform === 'win32' ? '\r\n' : '\n';
 const argv = minimist(process.argv.slice(2));
 
 const port = argv.p || 50000;
+const authServerList = loadAuthServerList();
 
 // Create proxy
 const proxy = express();
@@ -22,8 +23,6 @@ proxy.get('/', getMeta);
 
 // Start proxy
 proxy.listen(port, () => console.log(`[${ getTime() }] Proxy server running at http://localhost:${ port }`));
-
-loadAuthServerList();
 
 /**
  * @param {Request} req 
@@ -54,7 +53,6 @@ function getMeta(req, res) {
 async function authenticate(req, res) {
     const username = req.query.username;
 
-    const authServerList = loadAuthServerList();
     for (const authServerUrl of authServerList) {
         const authResponse = await authFetch(authServerUrl, req);
 
