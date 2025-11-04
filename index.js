@@ -22,7 +22,10 @@ proxy.get('/sessionserver/*suburl', authenticate);
 proxy.get('/', getMeta);
 
 // Start proxy
-proxy.listen(port, () => timeLog(`Proxy server running at http://localhost:${ port }`));
+proxy.listen(port, () => {
+    timeLog(`Proxy server running at http://localhost:${ port }`);
+    timeLog(`Loaded ${ authServerList.length } auth server(s)`)
+});
 
 /**
  * @param {Request} req 
