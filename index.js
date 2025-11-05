@@ -53,10 +53,7 @@ function getMeta(req, res) {
  * @param {import('express').Request} req
  */
 function getConnectedAddr(req) {
-    const connectionIp = req.ip.replace('::ffff:', '');
-    const connectionPort = req.socket.remotePort;
-
-    return `${connectionIp}:${connectionPort}`;
+    return req.ip.replace('::ffff:', '');
 }
 
 /**
