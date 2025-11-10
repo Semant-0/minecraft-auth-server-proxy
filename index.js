@@ -23,7 +23,7 @@ proxy.get('/', getMeta);
 
 // Start proxy
 proxy.listen(port, () => {
-    timeLog(`Proxy server running at http://localhost:${ port }`);
+    timeLog(`Proxy server running on port ${ port }`);
     timeLog(`Loaded ${ authServerList.length } auth server(s)`)
 });
 
