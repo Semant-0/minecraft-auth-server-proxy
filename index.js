@@ -15,6 +15,14 @@ const proxy = express();
 // Handle JSON body
 proxy.use(express.json());
 
+// Debug
+if (process.argv.includes('--debug')) {
+    proxy.use('*any', (req, res, next) => {
+        console.log(req.url);
+        next();
+    });
+}
+
 // Redirect
 proxy.get('/sessionserver/*suburl', authenticate);
 
