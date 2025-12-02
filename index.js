@@ -16,7 +16,7 @@ const proxy = express();
 proxy.use(express.json());
 
 // Debug
-if (process.argv.includes('--debug')) {
+if (argv.debug) {
     proxy.use('*any', (req, res, next) => {
         console.log(req.url);
         next();
