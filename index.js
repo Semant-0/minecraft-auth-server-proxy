@@ -18,7 +18,7 @@ proxy.use(express.json());
 // Debug
 if (argv.debug) {
     proxy.use('*any', (req, res, next) => {
-        console.log(req.url);
+        console.log(req.originalUrl || req.url);
         next();
     });
 }
