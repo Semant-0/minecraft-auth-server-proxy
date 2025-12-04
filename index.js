@@ -6,7 +6,7 @@ const ENDLINE = process.platform === 'win32' ? '\r\n' : '\n';
 
 const argv = minimist(process.argv.slice(2));
 
-const port = argv.p || 50000;
+const port = argv.p || 26000;
 const authServerList = loadAuthServerList();
 
 // Create proxy
