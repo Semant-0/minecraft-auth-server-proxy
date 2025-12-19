@@ -36,8 +36,12 @@ proxy.get('*server', getMeta);
 // Start proxy
 proxy.listen(port, () => {
     timeLog(`Proxy server running on port ${ port }`);
-    timeLog(`Loaded ${ authServerList.length } auth server(s)`);
-    loadUserData();
+
+    if (argv.offline) {
+        loadUserData();
+    } else {
+        timeLog(`Loaded ${ authServerList.length } auth server(s)`);
+    }
 });
 
 /**
@@ -78,16 +82,16 @@ function getConnectedAddr(req) {
 async function profile(req, res) {
     const uuid = req.params.uuid;
 
-    try {
-        const profileResponse = await fetch(req.url.replace('/sessionserver', 'https://sessionserver.mojang.com'));
-        res.send(profileResponse);
-    } catch (error) {
+    if (global.users) {
         for (const user of global.users) {
             if (user.id === uuid) return res.status(200).send(user);
         }
         
-        res.sendStatus(404);
+        return res.sendStatus(404);
     }
+
+    const profileResponse = await fetch(req.url.replace('/sessionserver', 'https://sessionserver.mojang.com'));
+    res.send(profileResponse);
 }
 
 /**
@@ -115,7 +119,14 @@ async function join(req, res) {
 async function authenticate(req, res) {
     const username = req.query.username;
 
-    try {
+    if (global.users) {
+        for (const user of global.users) {
+            if (user.name === username) {
+                timeLog(`${username} authenticated with user data file`);
+                return res.status(200).send(user);
+            }
+        }
+    } else {
         for (const authServerUrl of authServerList) {
             const authResponse = await authFetch(authServerUrl, req);
 
@@ -126,13 +137,6 @@ async function authenticate(req, res) {
             const authServerHostname = new URL(authServerUrl).hostname;
             timeLog(`${username} authenticated with ${authServerHostname}`);
             return res.status(200).setHeaders(authResponse.headers).send(authResponseBody);
-        }
-    } catch (error) {
-        for (const user of global.users) {
-            if (user.name === username) {
-                timeLog(`${username} authenticated with user data file`);
-                return res.status(200).send(user);
-            }
         }
     }
 
@@ -147,7 +151,7 @@ function loadAuthServerList() {
 }
 
 function loadUserData() {
-    let userDataPath = argv['user-data'];
+    let userDataPath = argv.offline;
     if (userDataPath) {
         if (userDataPath === true) userDataPath = 'user-data.json';
         
