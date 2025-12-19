@@ -23,7 +23,11 @@ if (argv.debug) {
     });
 }
 
-// Redirect
+// Proxy with offline fallback
+proxy.get('*prefix/profile/:uuid', profile);
+proxy.post('*prefix/join', join);
+
+// Proxy to different auth servers
 proxy.get('/sessionserver/*suburl', authenticate);
 
 // Serve meta
@@ -32,7 +36,8 @@ proxy.get('/', getMeta);
 // Start proxy
 proxy.listen(port, () => {
     timeLog(`Proxy server running on port ${ port }`);
-    timeLog(`Loaded ${ authServerList.length } auth server(s)`)
+    timeLog(`Loaded ${ authServerList.length } auth server(s)`);
+    loadUserData();
 });
 
 /**
@@ -40,7 +45,9 @@ proxy.listen(port, () => {
  * @param {import('express').Response} res 
  */
 function getMeta(req, res) {
-    timeLog(`Minecraft server (${ getConnectedAddr(req) }) connected`);
+    if (req.query.server) {
+        timeLog(`Minecraft server (${ getConnectedAddr(req) }) connected`);
+    }
 
     res.status(200).send({
         meta: {
@@ -68,19 +75,65 @@ function getConnectedAddr(req) {
  * @param {import('express').Request} req 
  * @param {import('express').Response} res 
  */
+async function profile(req, res) {
+    const uuid = req.params.uuid;
+
+    try {
+        const profileResponse = await fetch('https://sessionserver.mojang.com/session/minecraft/profile/' + uuid);
+        res.send(profileResponse);
+    } catch (error) {
+        for (const user of global.users) {
+            if (user.id === uuid) return res.status(200).send(user);
+        }
+        
+        res.sendStatus(404);
+    }
+}
+
+/**
+ * @param {import('express').Request} req 
+ * @param {import('express').Response} res 
+ */
+async function join(req, res) {
+    if (global.users) {
+        return res.status(200).setHeaders(new Map([['x-minecraft-request-id', 0]])).send();
+    }
+
+    const joinResponse = await fetch('https://sessionserver.mojang.com/session/minecraft/join', {
+        method: 'POST',
+        headers: req.headers,
+        body: JSON.stringify(req.body)
+    });
+
+    res.send(joinResponse);
+}
+
+/**
+ * @param {import('express').Request} req 
+ * @param {import('express').Response} res 
+ */
 async function authenticate(req, res) {
     const username = req.query.username;
 
-    for (const authServerUrl of authServerList) {
-        const authResponse = await authFetch(authServerUrl, req);
+    try {
+        for (const authServerUrl of authServerList) {
+            const authResponse = await authFetch(authServerUrl, req);
 
-        if (authResponse.status !== 200) continue;
+            if (authResponse.status !== 200) continue;
 
-        const authResponseBody = await getBody(authResponse);
+            const authResponseBody = await getBody(authResponse);
 
-        const authServerHostname = new URL(authServerUrl).hostname;
-        timeLog(`${username} authenticated with ${authServerHostname}`);
-        return res.status(200).setHeaders(authResponse.headers).send(authResponseBody);
+            const authServerHostname = new URL(authServerUrl).hostname;
+            timeLog(`${username} authenticated with ${authServerHostname}`);
+            return res.status(200).setHeaders(authResponse.headers).send(authResponseBody);
+        }
+    } catch (error) {
+        for (const user of global.users) {
+            if (user.name === username) {
+                timeLog(`${username} authenticated with user data file`);
+                return res.status(200).send(user);
+            }
+        }
     }
 
     timeLog(`Failed to authenticate ${username}`);
@@ -91,6 +144,26 @@ function loadAuthServerList() {
     const authServerFile = fs.readFileSync('./auth-server-list').toString();
     const authServerList = authServerFile.split(ENDLINE).filter(authServerUrl => authServerUrl.length > 0);
     return authServerList;
+}
+
+function loadUserData() {
+    let userDataPath = argv['user-data'];
+    if (userDataPath) {
+        if (userDataPath === true) userDataPath = 'user-data.json';
+        
+        if (!fs.existsSync(userDataPath)) {
+            timeLog(`Couldn't load user data file: ${userDataPath}`);
+        } else {
+            const usersText = fs.readFileSync(userDataPath, 'utf8');
+
+            try {
+                global.users = JSON.parse(usersText);
+                timeLog(`Loaded ${global.users.length} user(s)`);
+            } catch (error) {
+                timeLog(error);
+            }
+        }
+    }
 }
 
 /**
