@@ -28,10 +28,10 @@ proxy.get('*prefix/profile/:uuid', profile);
 proxy.post('*prefix/join', join);
 
 // Proxy to different auth servers
-proxy.get('/sessionserver/*suburl', authenticate);
+proxy.get('*prefix/hasJoined', authenticate);
 
 // Serve meta
-proxy.get('/', getMeta);
+proxy.get('*server', getMeta);
 
 // Start proxy
 proxy.listen(port, () => {
@@ -45,7 +45,7 @@ proxy.listen(port, () => {
  * @param {import('express').Response} res 
  */
 function getMeta(req, res) {
-    if (req.query.server) {
+    if (req.params.server.includes('server')) {
         timeLog(`Minecraft server (${ getConnectedAddr(req) }) connected`);
     }
 
@@ -79,7 +79,7 @@ async function profile(req, res) {
     const uuid = req.params.uuid;
 
     try {
-        const profileResponse = await fetch('https://sessionserver.mojang.com/session/minecraft/profile/' + uuid);
+        const profileResponse = await fetch(req.url.replace('/sessionserver', 'https://sessionserver.mojang.com'));
         res.send(profileResponse);
     } catch (error) {
         for (const user of global.users) {
@@ -99,7 +99,7 @@ async function join(req, res) {
         return res.status(200).setHeaders(new Map([['x-minecraft-request-id', 0]])).send();
     }
 
-    const joinResponse = await fetch('https://sessionserver.mojang.com/session/minecraft/join', {
+    const joinResponse = await fetch(req.url.replace('/sessionserver', 'https://sessionserver.mojang.com'), {
         method: 'POST',
         headers: req.headers,
         body: JSON.stringify(req.body)
