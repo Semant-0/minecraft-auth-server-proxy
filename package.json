@@ -6,7 +6,8 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node index.js",
-    "debug": "node index.js --debug"
+    "debug": "node index.js --debug",
+    "offline": "node index.js --offline"
   },
   "keywords": [],
   "author": "",
